@@ -1,0 +1,660 @@
+=>Looping 
+
+db.developers.insertMany([
+    {_id:1,name:"Bo Bo",hobbies:["reading","swimming","travelling"],languages:["WDF","PHP","Laravel"]},
+    {_id:2,name:"Tun Tun",hobbies:["gaming","writing","travelling"],languages:["WDF","jQuery","Reactjs"]},
+    {_id:3,name:"Su Su",hobbies:["reading","swimming","cooking"],languages:["WDF","Python","Django"]},
+    {_id:4,name:"Ni Ni",hobbies:["reading","cooking","travelling"],languages:["WDF","PHP","Laravel"]},
+    {_id:5,name:"Bo Bo",hobbies:["reading","yoga","travelling"],languages:["WDF","PHP","Laravel"]}
+])
+
+$map 
+$all 
+$filter
+$reduce
+$zip 
+$range
+$merge
+$function
+
+
+=> $map 
+
+syntax 
+
+{
+    $map:{
+        input:<array expression>,
+        as:<variable name>,
+        in:<expression to apply>
+    }
+}
+
+db.developers.aggregate([
+    {
+        $project:{
+            name:1,
+            lowercaseLanguages:{
+                $map:{
+                    input:"$languages",
+                    as:"lang",
+                    in:{
+                        $toLower:"$$lang"
+                    }
+                }
+            }
+        }
+    }
+])
+
+db.developers.aggregate([
+    {
+        $addFields:{
+            upperHobbies:{
+                $map:{
+                    input:"$hobbies",
+                    as:"hob",
+                    in:{$toUpper:"$$hob"}
+                }
+            }
+        }
+    }
+])
+
+----------------------------------------
+
+==> $all Operator 
+
+syntax 
+
+{
+    <field>:{
+        $all: [value1,value2,...]
+    }
+}
+
+
+db.developers.find()
+
+exe 1
+
+db.developers.find({
+    languages:{
+        $all:["WDF","Laravel"]
+    }
+});
+
+exe 2 
+
+db.developers.find({
+    languages:{
+        $all:["Laravel","WDF"]
+    }
+});
+
+---------------------------------------------------
+
+=> $filter  
+
+syntax 
+
+{
+    $filter:{
+        input: <array expression>,
+        as: <variable name> optional,
+        cond: <boolean expression>
+    }
+}
+
+exe 1
+
+db.developers.find({
+    languages:{
+        $all:["Laravel","WDF"]
+    }
+});
+
+exe 2 
+
+db.developers.aggregate([
+    {
+        $match:{
+            languages:{
+                $all:["Laravel","WDF"]
+            }
+        }
+    }
+])
+
+exe 1 
+
+db.developers.aggregate([
+    {
+        $addFields:{
+            phpDeveloper:{
+                $filter:{
+                    input:"$languages",
+                    as:"lang",
+                    cond:{
+                        $eq:["$$lang","PHP"]
+                    }
+                }
+            }
+        }
+    }
+])
+
+exe 2
+
+db.developers.aggregate([
+    {
+        $addFields:{
+            phpDeveloper:{
+                $filter:{
+                    input:"$languages",
+                    as:"lang",
+                    cond:{
+                        $eq:["$$lang","PHP"]
+                    }
+                }
+            }
+        }
+    },
+    {
+        $match:{
+            phpDeveloper:{
+                $ne:[]
+            }
+        }
+    }
+])
+
+exe 2
+
+db.developers.aggregate([
+    {
+        addFields:{
+            phpDeveloper:{
+                $filter:{
+                    input:"$languages",
+                    as:"lang",
+                    cond:{
+                        $eq:["$$lang","PHP"]
+                    }
+                }
+            }
+        }
+    },
+    {
+        $match:{
+            phpDeveloper:{
+                $ne:[]
+            }
+        }
+    },
+    {
+        $limit: 2
+    }
+])
+
+db.developers.aggregate([
+    {
+        $addFields:{
+            pythonDeveloper:{
+                $filter:{
+                    input:"$languages",
+                    as:"lang",
+                    cond:{
+                        $eq:["$$lang","Python"]
+                    }
+                }
+            }
+        }
+    },
+    {
+        $match:{
+            pythonDeveloper:{
+                $ne:[]
+            }
+        }
+    },
+    {
+        $limit: 2
+    }
+])
+
+exe 4
+
+db.developers.aggregate([
+    {
+        $project:{
+            name:1,
+            PythonDvpr:{
+                $filter:{
+                    input:"$languages",
+                    as:"lang",
+                    cond:{
+                        $eq:["$$lang","Python"]
+                    }
+                }
+            }
+        }
+    },
+    {
+        $match:{PythonDvpr:{$ne:[]}}
+    }
+])
+
+-----------------------------------------------------
+
+=> $reduce 
+
+syntax 
+
+{
+    $reduce:{
+        input:<array expression>,
+        initialValue:<expression> // starting value1 
+        in:<expression to apply> // Reduction logic using $$value and $$this
+    }
+}
+
+db.purchases.insertMany([
+    
+    {
+        orderId:1001,
+        items:[
+            {product:"Laptop",price:800,qty:1},
+            {product:"Mouse",price:20,qty:2},
+            {product:"Keyboard",price:50,qty:1}
+        ]
+    },
+    {
+        orderId:1002,
+        items:[
+            {product:"Monitor",price:300,qty:2},
+            {product:"Headphone",price:100,qty:1}
+        ]
+    },
+    {
+        orderId:1003,
+        items:[
+            {product:"Speaker",price:100,qty:4},
+            {product:"Webcam",price:50,qty:1}
+        ]
+    }
+
+])
+
+
+exe 1
+
+db.purchases.aggregate([
+
+    {
+        $project:{
+            _id:0,
+            orderId:1,
+            grandTotal:{
+                $reduce:{
+                    input:"$items",
+                    initialValue:0,
+                    in:{
+                        $add:["$$value",{
+                            $multiply:["$$this.price","$$this.qty"]
+                        }]
+                    }
+                }
+            }
+        }
+    }
+
+])
+
+exe 2 
+
+db.purchases.aggregate([
+
+    {
+        $project:{
+            _id:0,
+            orderId:1,
+            totalQuatity:{
+                $reduce:{
+                    input:"$items",
+                    initialValue:0,
+                    in:{
+                       $add:["$$value","$$this.qty"] 
+                    }
+                }
+            }
+        }
+    }
+
+])
+
+db.purchases.aggregate([
+
+    {
+        $project:{
+            _id:0,
+            orderId:1,
+            itemTotals:{
+                $map:{
+                    input:"$items",
+                    as:"item",
+                    in:{$multiply:["$$item.price","$$item.qty"]}
+                }
+            }
+        }
+    }
+
+])
+
+-----------------------------------------------------
+
+=> $zip ( combine array )
+
+syntax 
+
+{
+    $zip:{
+        inputs:[<array>,<array>],
+        useLongestLength:<boolean> // Optional (default : false),
+        defaults:[default,default1,default2,....] // Optional 
+    }
+}
+
+db.createCollection("itaccessories");
+
+db.itaccessories.insertMany([
+    {
+        product:"Laptop",
+        price:[1000,800,600],
+        quarters:["Q1","Q2","Q3"]
+    },
+    {
+        product:"Phone",
+        price:[700,500],
+        quarters:["Q1","Q2"]
+    },
+    {
+        product:"Tablet",
+        price:[400,300,200,100],
+        quarters:["Q1","Q2","Q3"]
+    },
+    {
+        product:"Headphone",
+        price:[500,400,300,200,100],
+        quarters:["Q1","Q2","Q3"]
+    }
+])
+
+db.itaccessories.find();
+
+exe 1 
+
+db.itaccessories.aggregate([
+    {
+        $project:{
+            product:1,
+            priceHistroy:{
+                $zip:{
+                    inputs:["$quarters","$price"]
+                }
+            }
+        }
+    }
+])
+
+exe 2 
+
+db.itaccessories.aggregate([
+    {
+        $project:{
+            product:1,
+            priceHistroy:{
+                $zip:{
+                    inputs:["$quarters","$price"],
+                    useLongestLength: false
+                }
+            }
+        }
+    }
+])
+
+exe 3
+
+db.itaccessories.aggregate([
+    {
+        $project:{
+            product:1,
+            priceHistroy:{
+                $zip:{
+                    inputs:["$quarters","$price"],
+                    useLongestLength: true
+                }
+            }
+        }
+    }
+])
+
+exe 4
+
+db.itaccessories.aggregate([
+    {
+        $project:{
+            product:1,
+            priceHistroy:{
+                $zip:{
+                    inputs:["$quarters","$price"],
+                    useLongestLength: true,
+                    defaults:["No quarters",0]
+                }
+            }
+        }
+    }
+])
+
+-----------------------------------------------------
+
+=> $range 
+
+syntax 
+
+{
+    $range: [<start>,<end>,<step ?>]
+}
+
+db.inits.insertMany([
+    {_id:1,label:"A",start:0,end:5,step:1},
+    {_id:2,label:"B",start:3,end:15,step:3},
+    {_id:3,label:"C",start:10,end:10,step:1},  // start == end 
+    {_id:4,label:"D",start:5,end:2,step:1}     // start > end
+])
+
+db.inits.find()
+
+exe 1
+
+db.inits.aggregate([
+    {
+        $project:{
+            label:1,
+            numbers:{
+                $range:[0,5]
+            }
+        }
+    }
+])
+
+exe 2
+
+db.inits.aggregate([
+    {
+        $project:{
+            label:1,
+            numRange:{
+                $range:["$start","$end"]
+            }
+        }
+    }
+])
+
+exe 3
+
+db.inits.aggregate([
+    {
+        $project:{
+            label:1,
+            numRange:{
+                $range:["$start","$end","$step"]
+            }
+        }
+    }
+])
+
+-----------------------------------------------------
+
+=> $merge 
+
+syntax 
+
+{
+    $merge:{
+        into:<target collection>,
+        on:<identifier field>,      // optional
+        whenMatched:<action>        // optional 
+        whenNotMatched:<action>    // optional
+    }
+}
+
+db.staffs.insertMany([
+    {_id:1,name:"Yu Yu",dep:"HR",salary:[4000,5000,6000]},
+    {_id:2,name:"Nu Nu",dep:"Account",salary:[3000,4000,5000]},
+    {_id:3,name:"Su Su",dep:"Warehouse",salary:[2000,3000,4000]}
+])
+
+db.staffs.find()
+
+exe 1 (if the target collection doesn't exit ! $merge create it.)
+
+show collections
+
+db.staffs.aggregate([
+    {
+        $merge:{
+            into:"staffsummary" // new target collection
+        }
+    }
+])
+
+show collections
+db.staffsummary.find()
+
+db.staffsummary.drop()
+show collections
+
+exe 2 
+
+db.staffs.insertMany([
+    {_id:4,name:"Aung Aung",dep:"IT",salary:[6000,7000,8000]},
+    {_id:5,name:"Kyaw Kyaw",dep:"Warehouse",salary:[2000,3000,4000]}
+])
+
+db.staffinfos.insertMany([
+    {_id:1,name:"Yu Yu",dep:"HR",salary:[4000,5000,6000]},
+    {_id:2,name:"Nu Nu",dep:"Account",salary:[3000,4000,5000]},
+    {_id:3,name:"Su Su",dep:"Warehouse",salary:[2000,3000,4000]}
+])
+
+db.staffs.find()
+db.staffinfos.find()
+
+db.staffs.aggregate([
+    {
+        $merge:{
+            into:"staffinfos",
+            on:"_id",                   // match by id
+            whenMatched:"merge",        // merge existing fields 
+            whenNotMatched:"insert"    // insert if not found
+        }
+    }
+])
+
+db.staffs.find()
+db.staffinfos.find()
+
+----------------------------------------------------------------------------
+
+=> $function 
+
+Syntax 
+
+{
+    $function:{
+        body:function(arg1,arg2,...){
+            return result;
+        },
+        args:[<expression>,<expression>,...], // input argument 
+        lang: "js"                           // always js 
+    }
+}
+
+db.borrows.insertMany([
+    {_id:1,name:"yi yi",age:21},
+    {_id:2,name:"nu nu",age:15},
+    {_id:3,name:"hla hla",age:29},
+    {_id:4,name:"aye aye",age:30},
+    {_id:5,name:"mi mi",age:35}
+]);
+
+db.borrows.aggregate([
+    {
+        $project:{
+            original:"$name",
+            capitalized:{
+               $function:{
+                     body:function(str){
+                        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+                    },
+                    args:["$name"],
+                    lang:"js"
+               }
+            }
+        }
+    }
+])
+
+db.borrows.aggregate([
+    {
+        $project:{
+            name:1,
+            loanVerify:{
+                $function:{
+                    body:function(age){
+                        if( age < 18 ) return "Loan not allow";
+                        if( age < 30 ) return "Loan allowed";
+                        else return "Will Considered";
+                    },
+                    args:["$age"],
+                    lang:"js"
+                }
+            }
+        }
+    }
+])
+
+----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+

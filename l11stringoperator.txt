@@ -1,0 +1,245 @@
+=> String Operator
+
+db.friend.insertMany([
+    {firstname:"Aung",lastname:"Kyaw",familyname:"AungGyi",email:"aungkyaw@gmail.com",nickname:"   aung   "},
+    {firstname:"Su",lastname:"Mon",familyname:"SuSu",email:"sumon@gmail.com",nickname:" su "},
+    {firstname:"Hnin",lastname:"Mya",familyname:"HninHin",email:"hninmya@gmail.com",nickname:"aung"},
+])
+
+db.friend.insertMany([
+    {firstname:"Tun",lastname:"Tun",familyname:"ATun",email:"tuntun@gmail.com",nickname:"tun",city:"Yangon"}
+])
+
+$concat 
+$substrBytes / $substrCP
+$toUpper / $toLower 
+$strLenBytes / $strLenCP
+$ifNull 
+$indexOfBytes / $indexOfCP 
+$split 
+$replaceAll
+$trim / $ltrim / $rtrim 
+
+=> $concat 
+
+db.friend.aggregate({
+    $project:{
+        fullName:{
+            $concat:["$firstname"," ","$lastname"]
+        }
+    }
+})
+
+--------------------------------------------------------------
+
+=> $substrBytes / $substrCP 
+
+db.friend.aggregate({
+    $project:{
+        first3:{
+            $substrBytes:["$familyname",0,3]
+        }
+    }
+})
+
+--------------------------------------------------------------
+
+db.friend.aggregate({
+    $project:{
+        first3:{
+            $substrCP:["$familyname",0,3]
+        }
+    }
+})
+
+--------------------------------------------------------------
+
+=> $toUpper / $toLower 
+
+db.friend.aggregate({
+    $project:{
+        toUpper:{
+            $toUpper:"$familyname"
+        }
+    }
+})
+
+db.friend.aggregate({
+    $project:{
+        toLower:{
+            $toLower:"$familyname"
+        }
+    }
+})
+
+--------------------------------------------------------------
+
+=> $strLenBytes / $strLenCP 
+
+db.friend.aggregate({
+    $project:{
+        familyname: 1,
+        len:{
+            $strLenBytes:"$familyname"
+        }
+    }
+})
+
+db.friend.aggregate({
+    $project:{
+        familyname: 1,
+        len:{
+            $strLenCP:"$familyname"
+        }
+    }
+})
+
+db.friend.aggregate({
+    $project:{
+        familyname: 1,
+        city:"$city",
+        len:{
+            $strLenCP:"$familyname"
+        }
+    }
+})
+
+// PlanExecutor error during aggregation :: caused by :: $strLenCP requires a string argument, found: missing
+
+db.friend.aggregate({
+    $project:{
+        familyname: 1,
+        city:"$city",
+        len:{
+            $strLenCP:"$city"
+        }
+    }
+})
+
+--------------------------------------------------------------
+
+=> solve width (ifNull)
+
+db.friend.aggregate({
+    $project:{
+        familyname: 1,
+        city:"$city",
+        len:{
+            $strLenCP:{
+                $ifNull:["$city",""]
+            }
+        }
+    }
+})
+
+--------------------------------------------------------------
+
+$indexOfBytes / $indexOfCP 
+
+db.friend.aggregate([
+    {
+        $project:{
+            email:1,
+            pos:{
+                $indexOfBytes:["$email","a"]
+            }
+        }
+    }
+])
+
+db.friend.aggregate([
+    {
+        $project:{
+            email:1,
+            pos:{
+                $indexOfCP:["$email","a"]
+            }
+        }
+    }
+])
+
+--------------------------------------------------------------
+
+$split 
+
+db.friend.aggregate([
+    {
+        $project:{
+            email:1,
+            parts:{
+                $split:["$email","@"]
+            }
+        }
+    }
+])
+
+--------------------------------------------------------------
+
+$replaceAll  
+
+db.friend.aggregate([
+    {
+        $project:{
+            email:1,
+            change:{
+                $replaceAll:{
+                    input:"$email",
+                    find:"gmail",
+                    replacement:"icloud"
+                }
+            }
+        }
+    }
+])
+
+--------------------------------------------------------------
+
+$trim , $ltrim , $rtrim 
+
+db.friend.aggregate([
+    {
+        $project:{
+            nickname:1,
+            removeSpace:{
+                $trim:{
+                    input:"$nickname",
+                    chars:" "
+                }
+            }
+        }
+    }
+])
+
+db.friend.aggregate([
+    {
+        $project:{
+            nickname:1,
+            removeSpace:{
+                $ltrim:{
+                    input:"$nickname",
+                    chars:" "
+                }
+            }
+        }
+    }
+])
+
+db.friend.aggregate([
+    {
+        $project:{
+            nickname:1,
+            removeSpace:{
+                $rtrim:{
+                    input:"$nickname",
+                    chars:" "
+                }
+            }
+        }
+    }
+])
+
+--------------------------------------------------------------
+
+
+
+
