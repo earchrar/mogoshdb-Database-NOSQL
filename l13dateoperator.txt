@@ -1,0 +1,204 @@
+=> Date Operator 
+
+$hour       
+$minute 
+$second 
+
+$year 
+$month 
+$dayOfMonth 
+
+$dateToString 
+$dateFromString 
+
+$dateAdd 
+$dateSubtract 
+
+$dateDiff
+
+db.events.insertMany([
+    {
+        _id:ObjectId(),
+        name:"Morning Run",
+        start:ISODate("2025-09-06T06:30:00Z"),
+        end:ISODate("2025-09-06T07:30:00Z"),
+        createdAt:ISODate("2025-09-06T09:10:45Z")
+    },
+    {
+        _id:ObjectId(),
+        name:"Client Meeting",
+        start:ISODate("2025-09-06T09:30:00Z"),
+        tz:"Asia/Bangkok",
+        createdAt:ISODate("2025-09-06T10:10:00Z")
+    },
+
+    {
+        _id:ObjectId(),
+        name:"Conference Call",
+        start:ISODate("2025-09-07T06:30:00Z"),
+        end:ISODate("2025-09-07T07:30:00Z"),
+        createdAt:ISODate("2025-09-07T09:10:45Z")
+    },
+
+    {
+        _id:ObjectId(),
+        name:"Project Deadline",
+        dateString:"2025-09-08 23:59:59",
+        tz:"Asia/Yangon"
+    },
+
+    {
+        _id:ObjectId(),
+        name:"new Project Meeting",
+        start:ISODate("2025-09-10T06:00:00Z"),
+        end:ISODate("2025-09-10T09:00:00Z")
+    }
+
+])
+
+exe 1 
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            year:{$year: "$start"},
+            month:{$month: "$start"},
+            day:{$dayOfMonth: "$start"}
+        }
+    }
+])
+
+exe 2
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            time:{
+                hour:{$hour: "$start"},
+                minute:{$minute: "$start"},
+                second:{$second: "$start"}
+            }
+        }
+    }
+])
+
+exe 3
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            time:{
+                hour:{$hour: "$start"},
+                minute:{$minute: "$start"},
+                second:{$second: "$start"}
+            }
+        }
+    }
+])
+
+exe 4
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            startLocal:{
+                $dateToString:{
+                    format:"%Y-%m-%d %H:%M:%S",
+                    date:"$start",
+                    timezone:"Asia/Yangon"
+                }
+            }
+        }
+    }
+])
+
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            deadlineDAte:{
+                $dateFromString:{
+                    format:"%Y-%m-%d %H:%M:%S",
+                    dateString:"$dateString",
+                    timezone:"Asia/Yangon"
+                }
+            }
+        }
+    }
+])
+
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            deadlineDAte:{
+                $dateFromString:{
+                    format:"%Y-%m-%d %H:%M:%S",
+                    dateString:"$dateString",
+                    timezone:"$tz"
+                }
+            }
+        }
+    }
+])
+
+exe 5 ( add 10 minute )
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            start:1,
+            plus10min:{
+                $dateAdd:{
+                    startDate:"$start",
+                    unit:"minute", // minute , month , ..
+                    amount:10
+                }
+            }
+        }
+    }
+])
+
+exe 6 ( subtract 1 month )
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            start:1,
+            mius1month:{
+                $dateSubtract:{
+                    startDate:"$end",
+                    unit:"month", // minute , month , ..
+                    amount:1
+                }
+            }
+        }
+    }
+])
+
+
+db.events.aggregate([
+    {
+        $project:{
+            name:1,
+            minuteDiff:{
+                $dateDiff:{
+                    startDate:"$start",
+                    endDate:"$end",
+                    unit:"minute"
+                }
+            },
+            dayDiff:{
+                $dateDiff:{
+                    startDate:"$start",
+                    endDate:"$end",
+                    unit:"day"
+                }
+            },
+        }
+    }
+])
+
+-------------------------------------------------------------------------------------------
+
+6DT
