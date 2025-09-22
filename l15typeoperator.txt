@@ -1,0 +1,99 @@
+=> Type Operators 
+
+$type 
+$isArray 
+$convert            $convert:{input:,to:"int",onError:-1 // fallback when conversion fails,onNull:null // keep null where value}
+$toDate             string -> BSON
+$toObjectId 
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+db.posterities.insertMany([
+    {_id:1,name:"Yi Yi",age:"30",score:"85.7",active:"true",tags:["mm","eng"],created:ISODate("2025-09-20T07:30:00Z"),orderIdStr:"656161616161616161616161"}, // 24-hex string
+    {_id:2,name:"Kyi Kyi",age:25,score:50.4,active:false,tags:"noArray",created:ISODate("2025-09-20T07:30:00Z"),orderIdObj:ObjectId("656161616161616161616161")},
+    {_id:3,name:"Ni Ni",age:null,score:"99.9",active:null,tags:[],created:"2025-09-20",orderIdStrBad:"notoobjectid"},
+    {_id:4,name:"Ei Ei",age:20,score:60,active:"true",tags:["phy"],created:ISODate("2025-09-20T07:30:00Z")},
+    {_id:5,name:"Ci Ci",age:18,score:40.2,active:true,tags:["eng"],created:ISODate("2025-09-20T07:30:00Z")}
+]);
+
+=> $type 
+
+db.posterities.aggregate([
+    {
+        $project:{
+            name:1,
+            ageType:{$type:"$age"},
+            scoreType:{$type:"$score"},
+            activeType:{$type:"$active"},
+            tagsType:{$type:"$tags"},
+            createdType:{$type:"$created"},
+            orderIdStr:{$type:"$orderIdStr"},
+            orderIdObj:{$type:"$orderIdObj"},
+            orderIdStrBad:{$type:"$orderIdStrBad"}
+        }
+    }
+])
+
+=> $isArray 
+
+db.posterities.aggregate([
+    {
+        $project:{
+            name:1,
+            isTagsArray:{$isArray:"$tags"}
+        }
+    }
+])
+
+=> $convert 
+
+exe (str to int) 
+
+db.posterities.aggregate([
+    {
+        $addFields:{
+            ageConverttoINT:{
+                $convert:{
+                    input:"$age",
+                    to:"int",
+                    onError:-1,
+                    onNull:null
+                }
+            }
+        }
+    }
+])
+
+exe (24-hex string to object id) 
+
+db.posterities.aggregate([
+    {
+        $addFields:{
+            orderID:{
+                $convert:{
+                    input:"$orderIdStr",
+                    to:"objectId",
+                    onError:null,
+                    onNull:null
+                }
+            }
+        }
+    }
+])
+
+=> $toDate 
+
+db.posterities.aggregate([
+    {
+        $addFields:{
+            createISO:{
+                $toDate:"$created"
+            }
+        }
+    }
+])
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+20TO

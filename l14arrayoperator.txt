@@ -10,9 +10,13 @@ $reduce
 $arrayElemAt 
 $last 
 $slice          $slice:["","",""]
-$setUnion 
+$setUnion       $setUnion:[$field,["value"]]
 
-$concatArrays
+$concatArrays     
+
+$range              { $range:[start,end,step] } {start(inclusive),end(exculsive),step(optional/default=1)}
+$reverseArray       {$reverseArray:<array>}
+$zip                {$zip:{inputs:[<array1>,<array2>]}} Pair up values from different arrays
 
 ------------------------------------------------------------------------------------------------------------------
 
@@ -191,6 +195,72 @@ db.ladies.aggregate([
         }
     }
 ])
+
+=> $range 
+
+db.ladies.aggregate([
+    {
+        $project:{
+            name:1,
+            sampleRange:{$range:[1,5]}
+        }
+    }
+])
+
+db.ladies.aggregate([
+    {
+        $project:{
+            name:1,
+            sampleRange:{$range:[2,5]}
+        }
+    }
+])
+
+db.ladies.aggregate([
+    {
+        $project:{
+            name:1,
+            friendIndexes:{$range:[0,{$size:"$friends"}]}
+        }
+    }
+])
+
+=> reverseArray
+
+db.ladies.aggregate([
+    {
+        $project:{
+            name:1,
+            reverseScores:{$reverseArray:"$scores"}
+        }
+    }
+])
+
+db.ladies.aggregate([
+    {
+        $project:{
+            name:1,
+            reverseWishlist:{$reverseArray:"$wishlist"}
+        }
+    }
+])
+
+=> $zip 
+
+db.ladies.aggregate([
+    {
+        $project:{
+            name:1,
+            scoresWishlist:{
+                $zip:{
+                    inputs:["$scores","$wishlist"]
+                }
+            }
+        }
+    }
+])
+
+
 
 ------------------------------------------------------------------------------------------------
 
